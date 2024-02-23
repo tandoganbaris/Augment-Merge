@@ -222,6 +222,51 @@ function get_weights_sparse(edges::Vector{Edge})
     dropzeros!(sparse_array)
     return sparse_array
 end
+function reconstruct_path(predecessors, start_node::Int64, end_node::Int64,edgecollection::Vector{Edge})
+    path = [start_node]
+    edges = Vector{Edge}()
+    distance = 0 
+    current = start_node
+    while current != end_node
+        pred = predecessors[end_node,current]
+        if pred[1]!=current #dijkstra returns same id if current connects to start
+            push!(path, pred[1])
+            exists, foundedge = is_edge_in_collection(Edge(Node(pred[1]), Node(current),0.0,0.0), edgecollection)
+            if exists
+                foundedge = deepcopy(foundedge)
+                foundedge.serviced=false
+                push!(edges, deepcopy(foundedge)) 
+            end 
+            current = pred[1]
+        else
+         
+            current =end_node
+        end
+    end
+    if(length(edges)>0) 
+        for edge in edges
+            distance += edge.distance
+        end
+    end
+    #reverse!(path)  # Reverse to get the correct order
+    #reverse!(edges) 
+    return path, edges,distance
+end
+function compare_edges(edge1::Edge, edge2::Edge)::Bool
+    return ((edge1.node1 == edge2.node1 && edge1.node2 == edge2.node2) ||
+           (edge1.node1 == edge2.node2 && edge1.node2 == edge2.node1))
+end
+
+function is_edge_in_collection(edge::Edge, edges_collection::Vector{Edge})
+    foundedge = nothing
+    for e in edges_collection
+        if compare_edges(edge, e)
+            foundedge = deepcopy(e)
+            return true , foundedge
+        end
+    end
+    return false , nothing
+end
 
 
 #filename = raw"C:\codestuff\SanneWaste\Data\CARP benchmark\gdb12.ind"
@@ -253,10 +298,19 @@ gplot(currentinstance.graph, nodefillc="white", edgestrokec="black",
 
 #DEMO OF DIJKSTRA
 graph = MetaGraph(currentinstance.graph)
-startnode = 3 #node/vertex to calculate distances and predecessors from 
+startnode = 1 #node/vertex to calculate distances and predecessors from 
 result= Graphs.dijkstra_shortest_paths(graph, startnode ,currentinstance.dmatrix,allpaths=true)
 distances = result.dists
 preds = result.predecessors
 println("Distances between input node $startnode to all other nodes: $distances \n")
 println("Predecessors from node $startnode to other nodes: $preds \n BEWARE: This matrix does not show the shortest predecessors without weights!")
 println("Predecesor matrix will have nothing if startnode=endnode and it will have startnode if endnode is directly connected to start node, e.g. if 1 is connected to 2 the matrix will have '[1]' at index 2")
+
+
+
+#DEMO OF SHORTEST PATH CONSTRUCTION 
+startnode = 1
+endnode =3
+pathnodes, pathedges, distance = reconstruct_path(currentinstance.predmatrix, startnode, endnode, currentinstance.alledges)
+println("\nPath from $startnode to $endnode is $pathnodes, with total distance $distance, covering edges:\n$pathedges")
+println("\nNote that the shortest path reconstruction uses only the first shortest path, as the number of shortest paths can increase while going further down")

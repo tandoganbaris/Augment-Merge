@@ -478,7 +478,7 @@ function reconstruct_path(predecessors, start_node::Int64, end_node::Int64,edgec
     while current != end_node
         pred = predecessors[end_node,current]
         if pred[1]!=current #dijkstra returns same id if current connects to start
-            append!(path, pred)
+            push!(path, pred[1])
             exists, foundedge = is_edge_in_collection(Filehandler.Edge(Node(pred[1]), Node(current),0.0,0.0), edgecollection)
             if exists
                 foundedge = deepcopy(foundedge)
