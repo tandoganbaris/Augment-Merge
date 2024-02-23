@@ -252,6 +252,30 @@ function reconstruct_path(predecessors, start_node::Int64, end_node::Int64,edgec
     #reverse!(edges) 
     return path, edges,distance
 end
+function reconstruct_path_NOEDGES(predecessors, start_node::Int64, end_node::Int64, dmatrix::Matrix{Float64})
+    path = [start_node]
+    distance = 0 
+    current = start_node
+    while current != end_node
+        pred = predecessors[end_node,current]
+        if pred[1]!=current #dijkstra returns same id if current connects to start
+            push!(path, pred[1])
+            current = pred[1]
+        else
+         
+            current =end_node
+        end
+    end
+    for i in 1:length(path) - 1
+        node1 = path[i]
+        node2 = path[i + 1]
+        distance += dmatrix[node1, node2]
+    end
+    #reverse!(path)  # Reverse to get the correct order
+    #reverse!(edges) 
+    return path, edges,distance
+end
+
 function compare_edges(edge1::Edge, edge2::Edge)::Bool
     return ((edge1.node1 == edge2.node1 && edge1.node2 == edge2.node2) ||
            (edge1.node1 == edge2.node2 && edge1.node2 == edge2.node1))
